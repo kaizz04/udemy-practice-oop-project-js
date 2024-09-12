@@ -1,3 +1,17 @@
+class DOMHelper {
+  static clearEventListeners(element) {
+    const clonedElement = element.cloneNode(true);
+    element.replaceWith(clonedElement);
+    return clonedElement;
+  }
+
+  static moveElement(elementId, newDestinationSelector) {
+    const element = document.getElementById(elementId);
+    const destinationElement = document.querySelector(newDestinationSelector);
+    destinationElement.append(element);
+  }
+}
+
 class Tooltip {}
 
 class ProjectItem {
@@ -11,10 +25,19 @@ class ProjectItem {
 
   connectSwitchButton() {
     const projectItemElement = document.getElementById(this.id);
-    const switchButton = projectItemElement.querySelector(
+    let switchButton = projectItemElement.querySelector(
       "button:last-of-type"
     );
-    switchButton.addEventListener("click", this.updateProjectListHandler);
+    switchButton = DOMHelper.clearEventListeners(switchButton);
+    switchButton.addEventListener(
+      "click",
+      this.updateProjectListHandler.bind(null, this.id)
+    );
+  }
+
+  update(updateProjectListFn, type) {
+    this.updateProjectListHandler = updateProjectListFn;
+    this.connectSwitchButton();
   }
 }
 
@@ -26,13 +49,17 @@ class ProjectList {
     const projItems = document.querySelectorAll(`#${type}-projects li`);
 
     for (const item of projItems) {
-      this.projects.push(new ProjectItem(item.id, this.switchProject.bind(this)));
+      this.projects.push(
+        new ProjectItem(item.id, this.switchProject.bind(this))
+      );
     }
     console.log(this.projects);
   }
 
-  addProject() {
-    console.log(this);
+  addProject(project) {
+    this.projects.push(project);
+    DOMHelper.moveElement(project.id, `#${this.type}-projects ul`);
+    project.update(this.switchProject.bind(this), this.type);
   }
 
   setSwitchHandlerFunction(switchHandlerFunction) {
@@ -55,8 +82,8 @@ class App {
       finishedProjectList.addProject.bind(finishedProjectList)
     );
     finishedProjectList.setSwitchHandlerFunction(
-        activeProjectList.addProject.bind(activeProjectList)
-      );
+      activeProjectList.addProject.bind(activeProjectList)
+    );
   }
 }
 App.init();
