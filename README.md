@@ -1,0 +1,1 @@
+Practice project for OOP & classes in JS
